@@ -46,9 +46,15 @@ def home():
 
 @app.route("/projects")
 def get_projects():
-    return jsonify(load_data()), 200, {
-        'Access-Control-Allow-Origin': 'http://127.0.0.1:8080'
-    }
+    data = load_data()
+    try:
+        request_data = request.get_json()
+        fields = request_data.get('fields', None)
+        if fields is not None:
+            data['projects'] = filter_list_of_dicts(data['projects'], fields)
+    except:
+        pass
+    return jsonify(data), 200, {'Access-Control-Allow-Origin': 'http://127.0.0.1:8080'}
 
 
 @app.route("/project", methods=['POST'])
@@ -89,6 +95,13 @@ def get_project(project_id):
 def get_project_tasks(project_id):
     for project in load_data()['projects']:
         if project['project_id'] == project_id:
+            try:
+                request_data = request.get_json()
+                fields = request_data.get('fields', None)
+                if fields is not None:
+                    project['tasks'] = filter_list_of_dicts(project['tasks'], fields)
+            except:
+                pass
             return jsonify({'tasks': project['tasks']})
     return jsonify({'message': 'project not found'}), 404
 
@@ -137,6 +150,16 @@ def complete_project(project_id):
                 save_data(data)
                 return jsonify(project), 200
     return jsonify({'message': 'project not found'}), 404
+
+def filter_list_of_dicts(list_of_dicts, fields):
+    filtered_dicts = []
+    for item in list_of_dicts:
+        filtered_item = item.copy()
+        for key in list(filtered_item.keys()):
+            if key not in fields:
+                del filtered_item[key]
+        filtered_dicts.append(filtered_item)
+    return filtered_dicts
 
 
 if __name__ == "__main__":

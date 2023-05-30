@@ -1,14 +1,30 @@
 from flask import Flask, render_template, jsonify, request
+import json
+import pickle
 
 app = Flask(__name__)
 
-projects = [{
+# A json fájl betöltése
+with open('projects.json', 'r') as file:
+    projects_json = json.load(file)
+    
+# A projects változó konvertálása pickle formátumba és kiírása a projects.pickle fájlba
+with open('projects.pickle', 'wb') as file:
+    pickle.dump(projects_json, file)
+
+# A projects változó beolvasása a pickle fájlból
+with open('projects.pickle', 'rb') as file:
+    data = pickle.load(file)
+    projects = data['projects']
+
+
+""" projects = [{
     'name': 'my first project',
     'tasks': [{
         'name': 'my first task',
         'completed': False
     }]
-}]
+}] """
 
 
 @app.route("/")
@@ -27,33 +43,32 @@ def get_projects():
 @app.route("/project", methods=['POST'])
 def create_project():
   request_data = request.get_json()
-  new_project = {'name': request_data['name'], 'tasks': request_data['tasks']}
+  new_project = {'id': len(projects)+1, 'name': request_data['name'], 'tasks': request_data['tasks']}
   projects.append(new_project)
   return jsonify(new_project), 201
 
 
-@app.route("/project/<string:name>")
-def get_project(name):
-  print(name)
+@app.route("/project/<string:project_id>")
+def get_project(project_id):
   for project in projects:
-    if project['name'] == name:
+    if project['project_id'] == project_id:
       return jsonify(project)
   return jsonify({'message': 'project not found'}), 404
 
 
-@app.route("/project/<string:name>/tasks")
-def get_project_tasks(name):
+@app.route("/project/<string:project_id>/tasks")
+def get_project_tasks(project_id):
   for project in projects:
-    if project['name'] == name:
+    if project['project_id'] == project_id:
       return jsonify({'tasks': project['tasks']})
   return jsonify({'message': 'project not found'}), 404
 
 
-@app.route("/project/<string:name>/task", methods=['POST'])
-def add_task_to_project(name):
+@app.route("/project/<string:project_id>/task", methods=['POST'])
+def add_task_to_project(project_id):
   request_data = request.get_json()
   for project in projects:
-    if 'name' in project and project['name'] == name:
+    if 'project_id' in project and project['project_id'] == project_id:
       if 'completed' not in request_data or type(
           request_data['completed']) is not bool:
         return jsonify(

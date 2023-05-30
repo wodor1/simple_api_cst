@@ -98,7 +98,7 @@ def add_task_to_project(project_id):
     request_data = request.get_json()
     data = load_data()
     for project in data['projects']:
-        if 'project_id' in project and project['project_id'] == project_id:
+        if project['project_id'] == project_id:
             if 'completed' not in request_data or type(
                     request_data['completed']) is not bool:
                 return jsonify(
@@ -112,6 +112,17 @@ def add_task_to_project(project_id):
             save_data(data)
             return jsonify(new_task), 201
     return jsonify({'message': 'project not found'}), 404
+
+
+@app.route("/project/<string:project_id>/task/<string:task_id>", methods=['GET'])
+def get_specific_task(project_id, task_id):
+    data = load_data()
+    for project in data['projects']:
+        if project['project_id'] == project_id:
+            for task in project['tasks']:
+                if task['task_id'] == task_id:
+                    return jsonify(task), 200
+    return jsonify({'message': 'task not found'}), 404
 
 
 @app.route("/project/<string:project_id>/complete", methods=['POST'])

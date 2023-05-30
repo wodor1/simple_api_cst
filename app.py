@@ -113,5 +113,20 @@ def add_task_to_project(project_id):
             return jsonify(new_task), 201
     return jsonify({'message': 'project not found'}), 404
 
+
+@app.route("/project/<string:project_id>/complete", methods=['POST'])
+def complete_project(project_id):
+    data = load_data()
+    for project in data['projects']:
+        if project['project_id'] == project_id:
+            if project['completed']:
+                return '', 200
+            else:
+                project['completed'] = True
+                save_data(data)
+                return jsonify(project), 200
+    return jsonify({'message': 'project not found'}), 404
+
+
 if __name__ == "__main__":
     app.run(debug=True)
